@@ -15,7 +15,7 @@ public class ProcesadorTexto {
         StringBuilder resultados = new StringBuilder();
         int cantIDs = 0;
         int cantNum = 0;
-        int cantOtros = 0;
+        int cantLexe = 0;
 
         // Lista para guardar lexemas
         ArrayList<String> listaLexemas = new ArrayList<>();
@@ -35,7 +35,7 @@ public class ProcesadorTexto {
                 cantNum++;
                 resultados.append("Número: ").append(hallazgo).append("\n");
             } else if (matcher.group(3) != null) {
-                cantOtros++;
+                cantLexe++;
 
                 // SOLO símbolos
                 String nombreSimb = nombreLexema(hallazgo);
@@ -47,7 +47,7 @@ public class ProcesadorTexto {
             System.out.println(lex);
         }
 
-        return "IDs: " + cantIDs + " | Números: " + cantNum + " | Otros Símbolos: " + cantOtros +
+        return "IDs: " + cantIDs + " | Números: " + cantNum + " | Lexemas: " + cantLexe +
                 "\n\nElementos encontrados en orden:\n" + resultados.toString();
     }
 

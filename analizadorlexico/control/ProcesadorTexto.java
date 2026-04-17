@@ -3,6 +3,7 @@ package analizadorlexico.control;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
+import lexemas.Lexema;
 import java.util.ArrayList;
 
 public class ProcesadorTexto {
@@ -11,7 +12,6 @@ public class ProcesadorTexto {
 
     public String buscarIdentificadores(String texto) {
 
-        // Reiniciar errores cada análisis
         erroresLexicos = 0;
 
         if (texto == null || texto.trim().isEmpty()) {
@@ -19,14 +19,17 @@ public class ProcesadorTexto {
         }
 
         StringBuilder resultados = new StringBuilder();
-        int cantIDs = 0;
-        int cantNum = 0;
-        int cantLexe = 0;
-        int cantErrores = 0;
+        int cantIDs = 0, cantNum = 0, cantLexe = 0, cantErrores = 0;
 
-        ArrayList<String> listaLexemas = new ArrayList<>();
+        ArrayList<Lexema> listaLexemas = new ArrayList<>();
 
-        String regex = "([A-Za-z]\\w*)|(0|[1-9]\\d*)|(==|!=|<=|>=|<|>|=|\\+|-|\\*|\\.|,|;|\\(|\\))|(%|/)";
+        // TU REGEX EXACTA (Solo cambié /s por \\s+ para el grupo 5 de espacios)
+        String regex = "([A-Za-z]\\w*)|" + // Grupo 1: Identificadores
+                "(0|[1-9]\\d*)|" + // Grupo 2: Numeros
+                "(==|!=|<=|>=|<|>|=|\\+|-|\\*|/)|" + // Grupo 3: Logicos y Aritméticos
+                "(\\.|,|;|\\(|\\))|" + // Grupo 4: Puntuacion
+                "(\\s+)|" + // Grupo 5: Espacios
+                "(.)"; // Grupo 6: ERRORES
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(texto);
@@ -35,33 +38,37 @@ public class ProcesadorTexto {
 
             String hallazgo = matcher.group();
 
+            // 1. IDENTIFICADORES Y PALABRAS RESERVADAS
             if (matcher.group(1) != null) {
                 cantIDs++;
-                resultados.append("Identificador: ").append(hallazgo).append("\n");
-
-            } else if (matcher.group(2) != null) {
+                listaLexemas.add(new Lexema(hallazgo, "ID"));
+                continue;
+            }
+            // 2. NUMEROS
+            if (matcher.group(2) != null) {
                 cantNum++;
-                resultados.append("Número: ").append(hallazgo).append("\n");
+                listaLexemas.add(new Lexema(hallazgo, "Num"));
+                continue;
+            }
 
-            } else if (matcher.group(3) != null) {
+            // 3. OPERADORES Y PUNTUACION (Grupos 3 y 4)
+            if (matcher.group(3) != null || matcher.group(4) != null) {
                 cantLexe++;
+                listaLexemas.add(new Lexema(hallazgo, "Simb"));
+                continue;
+            }
+            
+            // 4. ESPACIOS (Se ignoran)
+            if (matcher.group(5) != null) {
+                continue;
+            }
 
-                String nombreSimb = nombreLexema(hallazgo);
-                listaLexemas.add(nombreSimb + ": " + hallazgo);
-
-                resultados.append(nombreSimb)
-                        .append(": ")
-                        .append(hallazgo)
-                        .append("\n");
-
-            } else if (matcher.group(4) != null) {
+            // 5. ERRORES LEXICOS (Solo lo que cae en el Grupo 6)
+            if (matcher.group(6) != null) {
 
                 cantErrores++;
                 erroresLexicos++;
-
-                resultados.append(">>Error Lexico: Simbolo no permitido ")
-                        .append(hallazgo)
-                        .append(" >>\n");
+                listaLexemas.add(new Lexema(hallazgo, "Error"));
 
                 int respuesta = JOptionPane.showOptionDialog(
                         null,
@@ -78,56 +85,25 @@ public class ProcesadorTexto {
                     resultados.append("\n-- Analisis Detenido Por el Usuario --\n");
                     break;
                 }
+
+                continue;
             }
         }
+        
+        // AGREGAR FORMATO DE TABLA AL RESULTADO FINAL
+        for (Lexema lex : listaLexemas) {
+            resultados.append(lex.toString()).append("\n");
+        }
 
-        return "IDs: " + cantIDs +
+        return " IDs/Palabras: " + cantIDs +
                 " | Números: " + cantNum +
-                " | Lexemas: " + cantLexe +
+                " | Símbolos: " + cantLexe +
                 " | Errores: " + cantErrores +
-                "\n\nElementos encontrados en orden:\n"
+                "\n\nTabla de Símbolos en orden:\n"
                 + resultados.toString();
     }
 
     public int getErroresLexicos() {
         return erroresLexicos;
-    }
-
-    private String nombreLexema(String simbolo) {
-
-        switch (simbolo) {
-            case "==":
-                return "IGUAL_IGUAL";
-            case "!=":
-                return "DIFERENTE_DE";
-            case "<=":
-                return "MENOR_IGUAL_QUE";
-            case ">=":
-                return "MAYOR_IGUAL_QUE";
-            case "<":
-                return "MENOR_QUE";
-            case ">":
-                return "MAYOR_QUE";
-            case "=":
-                return "IGUAL";
-            case "+":
-                return "SUMA";
-            case "-":
-                return "RESTA";
-            case "*":
-                return "MULT";
-            case ".":
-                return "PUNTO";
-            case ",":
-                return "COMA";
-            case ";":
-                return "PUNTO_COMA";
-            case "(":
-                return "PARENTESIS_ABRE";
-            case ")":
-                return "PARENTESIS_CIERRA";
-            default:
-                return "DESCONOCIDO";
-        }
     }
 }

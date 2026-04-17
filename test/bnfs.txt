@@ -1,4 +1,4 @@
-<Programa>::= <Bloque> . ´
+<Programa>::= <Bloque> .
 
 <Bloque>::=<LinealC><LinealV><LinealP><Proposicion>
 <LinealC>::= <LinealConst>|∅
